@@ -73,6 +73,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system -r requirements/cuda.txt \
     --extra-index-url https://download.pytorch.org/whl/cu$(echo $CUDA_VERSION | cut -d. -f1,2 | tr -d '.')
 
+# Build xformers from source for Blackwell support
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+        # Remove pre-installed xformers if any \
+        uv pip uninstall --system xformers -y || true; \
+        # Build xformers from source with our custom arch list \
+        TORCH_CUDA_ARCH_LIST="8.6 8.9 12.0" MAX_JOBS=48 \
+        uv pip install --system -v --no-build-isolation \
+        git+https://github.com/facebookresearch/xformers.git@v0.0.30; \
+    fi
+
 # cuda arch list used by torch
 # can be useful for both `dev` and `test`
 # explicitly set the list to avoid issues with torch 2.2
@@ -258,7 +269,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 . /etc/environment && \
 if [ "$TARGETPLATFORM" != "linux/arm64" ]; then \
     # Build FlashInfer from source for all CUDA versions due to broken wheel URL
-    export TORCH_CUDA_ARCH_LIST='8.6 8.9 10.0a' && \
+    export TORCH_CUDA_ARCH_LIST='8.6 8.9 12.0' && \
     git clone https://github.com/flashinfer-ai/flashinfer.git --single-branch --branch v0.2.6.post1 --recursive && \
     # Needed to build AOT kernels
     (cd flashinfer && \
