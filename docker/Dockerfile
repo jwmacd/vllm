@@ -88,11 +88,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # can be useful for both `dev` and `test`
 # explicitly set the list to avoid issues with torch 2.2
 # see https://github.com/pytorch/pytorch/pull/123243
-ARG torch_cuda_arch_list='8.6 8.9 12.0+PTX'
+ARG torch_cuda_arch_list="8.6;8.9;12.0+PTX"
 ENV TORCH_CUDA_ARCH_LIST=${torch_cuda_arch_list}
 # Override the arch list for flash-attn to reduce the binary size
-ARG vllm_fa_cmake_gpu_arches='86-real;89-real'
+ARG vllm_fa_cmake_gpu_arches="86-real;89-real;120-real"
 ENV VLLM_FA_CMAKE_GPU_ARCHES=${vllm_fa_cmake_gpu_arches}
+# Force FlashAttention v2 for compatibility with Blackwell GPUs
+ENV VLLM_FLASH_ATTN_VERSION=2
 #################### BASE BUILD IMAGE ####################
 
 #################### WHEEL BUILD IMAGE ####################
